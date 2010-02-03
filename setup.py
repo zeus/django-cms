@@ -1,10 +1,19 @@
 from setuptools import setup, find_packages
-import os
+import os, fnmatch
 import cms
+
 media_files = []
 
-for dirpath, dirnames, filenames in os.walk('cms/media'):
-    media_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
+for dirpath, dirnames, filenames in os.walk(os.path.join('cms', 'media')):
+    for filename in filenames:
+        filepath = os.path.join(dirpath, filename)
+        failed = False
+        for pattern in ('*.py', '*.pyc', '*~', '.*', '*.bak', '*.swp*'):
+            if fnmatch.fnmatchcase(filename, pattern):
+                failed = True
+        if failed:
+            continue
+        media_files.append(os.path.join(*filepath.split(os.sep)[1:]))
 
 setup(
     author="Patrick Lauber",
@@ -31,14 +40,12 @@ setup(
     requires=[
         'django (>1.1.0)',
     ],
-    
     packages=find_packages(),
     package_dir={
         'cms': 'cms',
         'mptt': 'mptt',
         'publisher': 'publisher',
     },
-    data_files = media_files,
     package_data = {
         'cms': [
             'templates/admin/*.html',
@@ -47,12 +54,11 @@ setup(
             'templates/admin/cms/page/*.html',
             'templates/admin/cms/page/*/*.html',
             'templates/cms/*.html',
-            'templates/admin/*.html',
             'plugins/*/templates/cms/plugins/*.html',
             'plugins/*/templates/cms/plugins/*/*.html',
             'plugins/*/templates/cms/plugins/*/*.js',
             'locale/*/LC_MESSAGES/*'
-        ],
+        ] + media_files,
         'example': [
             'templates/*.html',
             'store/templates/store/plugins/*.html',
